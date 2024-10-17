@@ -1,0 +1,30 @@
+[socket]
+port = 8000
+ip = "0.0.0.0"
+
+[http]
+max_http_header_size = 8192
+# TODO to set up table of {...} codes for find / replace
+server_name = "Frank's web server {system}/{release})"
+# list of additional http fields TODO setup table for this
+fields = []
+
+[resource]
+resource_dir = "./"
+default_page = "index.html"
+# storing GET and POST requests
+request_storage = ""
+cache_enabled = false
+# table routing is priotitised over filesystem routing
+fs_routing = true
+table_routing = false
+# list of inline tables?
+route_table = [
+    {}
+]
+
+[compression]
+gzip_compression_level = 6
+deflate_compression_level = 6
+# defines both priority and supported compression schemas
+compression_priority = ["br", "gzip", "identity", "deflate"]
