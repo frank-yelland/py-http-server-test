@@ -18,6 +18,7 @@ exit values:
 import importlib.util
 import socket
 import threading
+from time import sleep
 # import pprint
 import os
 import sys
@@ -95,10 +96,7 @@ install zstd' or using your package manager")
         sys.exit(2)
 
     LOGGER.info("starting listener")
-    try:
-        listener()
-    except KeyboardInterrupt:
-        LOGGER.warning("ctrl+c pressed")
+    listener()
 
     # cleanup
 
@@ -137,7 +135,7 @@ def handler(connection, client_addr, client_id):
     client = http.process_request_headers(client, raw_content)
     LOGGER.info("closing connection")
     connection.close()
-    LOGGER.info("connection closed",)
+    LOGGER.info("connection closed")
 
 
 def listener():
@@ -152,21 +150,34 @@ def listener():
         LOGGER.info("started listening on ip '%s' and port %d",
                     CONFIG.ip,
                     CONFIG.port)
-        while True:
-            # opening a new thread for each connection
-            try:
-                # timeout to prevent the main thread locking permanently
-                # meaning ctrl+c doesn't work
-                listening_socket.settimeout(1)
-                new_connection = listening_socket.accept()
-                threading.Thread(target=handler,
-                                 args=(*new_connection, connection_id),
-                                 daemon=True).start()
-                connection_id += 1
-            except TimeoutError:
-                pass
+        try:
+            while True:
+                # opening a new thread for each connection
+                try:
+                    # timeout to prevent the main thread locking permanently
+                    # meaning ctrl+c doesn't work
+                    listening_socket.settimeout(1)
+                    new_connection = listening_socket.accept()
+                    threading.Thread(target=handler,
+                                    args=(*new_connection, connection_id),
+                                    daemon=True).start()
+                    connection_id += 1
+                except TimeoutError:
+                    pass
+        except KeyboardInterrupt:
+            LOGGER.warning("ctrl+c pressed")
+            closed = False
+            # spinning to make sure socket is closed
+            LOGGER.info("closing socket...")
+            while not closed:
+                try:
+                    listening_socket.close()
+                except OSError:
+                    sleep(0.1)
+            LOGGER.info("socket closed")
+
     LOGGER.info("lisener closed")
 
 
 if __name__ == "__main__":
-    code = init()
+    init()
