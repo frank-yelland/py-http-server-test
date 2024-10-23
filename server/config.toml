@@ -1,6 +1,7 @@
-[socket]
+[server]
 port = 8000
 ip = "0.0.0.0"
+log_dir = "./logs"
 
 [http]
 max_http_header_size = 8192
@@ -10,7 +11,7 @@ server_name = "Frank's web server {system}/{release})"
 fields = []
 
 [resource]
-resource_dir = "./"
+resource_dir = "./www/"
 default_page = "index.html"
 # storing GET and POST requests
 request_storage = ""
@@ -22,9 +23,14 @@ table_routing = false
 route_table = [
     {}
 ]
-
-[compression]
+# (fast) -> (small)
+# gzip ranges from 1-9
+# deflate ranges from 0-9
+# ranges from 0-11
+# ranges from -7-22
 gzip_compression_level = 6
 deflate_compression_level = 6
+brotli_compression_level = 6
+zstd_compression_level = 6
 # defines both priority and supported compression schemas
 compression_priority = ["br", "gzip", "identity", "deflate"]

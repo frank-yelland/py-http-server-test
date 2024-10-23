@@ -2,15 +2,18 @@
 """
 http parsing & response
 constants:
+    CONFIG
+    LOGGER
     STATUS_TABLE
-    MAX_HTTP_HEADER_SIZE
-    SERVER_NAME
 functions:
     process_request_headers
     process_response_headers
     process_request
 """
 
+
+CONFIG = None
+LOGGER = None
 STATUS_TABLE = {
     100: "Continue",
     101: "Switching Protocols",
@@ -91,3 +94,39 @@ STATUS_TABLE = {
     525: "SSL Handshake Failed",
     526: "Invalid SSL Certificate",
 }
+
+
+def process_request_headers(client: dict, content: bytes):
+    """processes request headers
+    Arguments:
+        client: dict: client information
+        content: bytes: content of request
+    Returns:
+        client: dict: client information"""
+
+    # no mutation of the original
+    client = client.copy()
+
+    # http headers are terminated with a blank line and each line terminates
+    # with a \r\r, therefore the header ends with \r\n\r\n
+    content = content.split(b"\r\n\r\n")
+    headers = content[0].decode("utf-8").split("\r\n")
+    body = content[1]
+
+    client.update({"request": {"body": body}})
+
+    header_dict = {}
+    for line in headers:
+        line = line.split(":")
+        header_dict.update({line[0]: line[1]})
+
+
+    try:
+        # splitting HTTP request into the request method, requested resource
+        # and http version
+        method, resource, http_version = headers[0].split(" ")
+    except ValueError:
+        LOGGER.warning(f"mangled http header received: '{content[0]}'")
+        # error 505 - http version not supported
+
+    return client

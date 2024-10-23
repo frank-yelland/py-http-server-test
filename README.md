@@ -2,6 +2,8 @@
 
 crappy HTTP server written in python
 
+run from within the server directory
+
 ## configuration
 
 configuration is in `server/config.toml`
@@ -34,7 +36,7 @@ graph TD;
     fetch_partial_multi("fetch multipart body")
     compress("compress body")
     handler_send("send response & terminate connection")
-    idempotent("hash in list of GET/POST requests")
+    idempotent("hash in list of GET/POST requests?")
     cache("write to cache and/or modify resources")
     listener --> handler
     handler --> listener
@@ -57,3 +59,5 @@ graph TD;
     idempotent -->|no| process_response_headers
     idempotent -->|yes| cache 
 ```
+
+configuration is done by server.py setting the CONFIG global variable in each module to an object that contains all the loaded settings
