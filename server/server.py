@@ -82,7 +82,7 @@ install zstd' or using your package manager")
         LOGGER.error("errors loading settings")
         for i, error in enumerate(errors):
             LOGGER.error("[%i] %s", i, error)
-        LOGGER.info("closing server")
+        LOGGER.info("closing server...")
         sys.exit(1)
     LOGGER.info("settings loaded")
 
@@ -92,10 +92,10 @@ install zstd' or using your package manager")
         log.init_logger_file()
     except OSError as err:
         LOGGER.error("could not open log file: %s", str(err))
-        LOGGER.info("closing server")
+        LOGGER.info("closing server...")
         sys.exit(2)
 
-    LOGGER.info("starting listener")
+    LOGGER.info("starting listener...")
     listener()
 
     # cleanup
@@ -133,7 +133,7 @@ def handler(connection, client_addr, client_id):
     content_hash = md5(raw_content).hexdigest()
     client.update({"request": {"hash": content_hash}})
     client = http.process_request_headers(client, raw_content)
-    LOGGER.info("closing connection")
+    LOGGER.info("closing connection...")
     connection.close()
     LOGGER.info("connection closed")
 
@@ -144,10 +144,11 @@ def listener():
     # are open
     connection_id = 1
     with socket.socket() as listening_socket:
+        listening_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listening_socket.bind((CONFIG.ip, CONFIG.port))
         listening_socket.listen()
         # log_info(f"started listening on ip '{IP}' and port {PORT}")
-        LOGGER.info("started listening on ip '%s' and port %d",
+        LOGGER.info("started listening on ip '%s' and port %d...",
                     CONFIG.ip,
                     CONFIG.port)
         try:
@@ -172,7 +173,9 @@ def listener():
             while not closed:
                 try:
                     listening_socket.close()
-                except OSError:
+                    closed = True
+                except OSError as err:
+                    LOGGER.warning("error closing socket %s", str(err))
                     sleep(0.1)
             LOGGER.info("socket closed")
 

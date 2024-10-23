@@ -115,10 +115,10 @@ def process_request_headers(client: dict, content: bytes):
 
     client.update({"request": {"body": body}})
 
-    header_dict = {}
-    for line in headers:
-        line = line.split(":")
-        header_dict.update({line[0]: line[1]})
+    # header_dict = {}
+    # for line in headers:
+    #     line = line.split(":")
+    #     header_dict.update({line[0]: line[1]})
 
 
     try:
