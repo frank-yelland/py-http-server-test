@@ -23,7 +23,6 @@ exit values:
 import importlib.util
 import socket
 import threading
-from time import sleep
 import pprint
 import os
 import sys
@@ -144,6 +143,42 @@ def handler(connection, client_addr, client_id):
         client.update({"request": {"hash": content_hash}})
         client = http.process_request_headers(client, raw_content)
         pprint.pprint(client, indent=4, sort_dicts=True)
+
+        # splitting logic based on HTTP method
+        # pre-extracting useful information
+        method = client["request"].get("method", "")
+        resource = client["request"].get("resource", "/")
+        match method:
+            case "HEAD":
+                LOGGER.info("client requested HEAD on %s", resource)
+                # body = b""
+                # status = 200
+                # # no additional processing
+                # pass
+            case "GET":
+                LOGGER.info("client requested GET on %s", resource)
+            case "POST":
+                LOGGER.info("client requested POST on %s", resource)
+            case "PUT":
+                LOGGER.info("client requested PUT on %s", resource)
+            case "DELETE":
+                LOGGER.info("client requested DELETE on %s", resource)
+            case "OPTIONS":
+                LOGGER.info("client requested OPTIONS on %s", resource)
+            case "TRACE":
+                LOGGER.info("client requested TRACE on %s", resource)
+            case "PATCH":
+                LOGGER.info("client requested PATCH on %s", resource)
+            case "CONNECT":
+                LOGGER.warning("client requested CONNECT")
+                # error 501 not implemented
+            case _:
+                LOGGER.warning("client requested unrecognised method '%s'",
+                               method)
+                # error 400 bad request
+        
+        # client.update
+
     except Exception as error:
         # closing socket if handler crashes
         LOGGER.error("handler crashed")
@@ -151,6 +186,7 @@ def handler(connection, client_addr, client_id):
         connection.close()
         LOGGER.info("connection closed")
         raise error
+
     except KeyboardInterrupt:
         # close socket if ctrl+c is pressed
         # not sure if this actually gets triggered
@@ -158,6 +194,7 @@ def handler(connection, client_addr, client_id):
         connection.close()
         LOGGER.info("connection closed")
         return
+
     LOGGER.info("closing connection...")
     connection.close()
     LOGGER.info("connection closed")

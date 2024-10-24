@@ -71,7 +71,6 @@ STATUS_TABLE = {
     440: b"Login Time-out",
     444: b"Connection Closed Without Response",
     449: b"Retry With",
-    450: b"Blocked by Windows Parental Controls",
     451: b"Unavailable For Legal Reasons",
     494: b"Request Header Too Large",
     495: b"SSL Certificate Error",

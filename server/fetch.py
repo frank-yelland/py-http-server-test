@@ -6,6 +6,7 @@ constants:
     LOGGER
 functions:
     fetch
+    fetch_meta
     fetch_partial
     fetch_partial_multi
     compress

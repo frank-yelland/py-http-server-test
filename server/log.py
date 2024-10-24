@@ -15,7 +15,6 @@ classes:
 
 import logging
 import datetime
-import logging.handlers
 import os
 
 LOG_FORMAT_TEMPLATE = "%(asctime)s [%(threadName)s] [%(levelname)s] \
@@ -110,7 +109,8 @@ def init_logger_file():
     log_path = os.path.join(log_dir, log_file_name)
     # allegedly this is what you're supposed to do
     if os.name == "posix":
-        file_log = logging.handlers.WatchedFileHandler(log_path, encoding='utf-8')
+        file_log = logging.handlers.WatchedFileHandler(log_path,
+                                                       encoding='utf-8')
     else:
         file_log = logging.FileHandler(log_path, encoding='utf-8')
 
