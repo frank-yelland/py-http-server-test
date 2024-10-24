@@ -6,7 +6,7 @@ log_dir = "./logs"
 [http]
 max_http_header_size = 8192
 # TODO to set up table of {...} codes for find / replace
-server_name = "Frank's web server {system}/{release})"
+server_name = "Frank's web server ({system}/{release})"
 # list of additional http fields TODO setup table for this
 fields = []
 

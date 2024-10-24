@@ -12,6 +12,7 @@ configuration is in `server/config.toml`
 
 ## goals
 
+- [x] settings hotloading
 - [ ] PUT, POST, GET & HEAD requests
 - [ ] multipart ranges
 - [ ] compression
@@ -60,4 +61,6 @@ graph TD;
     idempotent -->|yes| cache 
 ```
 
-configuration is done by server.py setting the CONFIG global variable in each module to an object that contains all the loaded settings
+configuration is done by `server.py` setting the `CONFIG` global variable in each module to an object that contains all the loaded settings
+
+the server will hotload settings every ~5s, but cannot enable brotli or zstd if they are installed while the server is running
