@@ -24,8 +24,10 @@ class Settings:
         self.fields = []
         self.resource_dir = "./www/"
         self.default_page = "index.html"
-        self.request_storage = ""
-        self.cache_enabled = False
+        self.acl_file = []
+        self.acl_table = []
+        self.acl_type = "allow"
+        self.response_cache_enabled = False
         self.fs_routing = True
         self.table_routing = False
         self.route_table = [{}]

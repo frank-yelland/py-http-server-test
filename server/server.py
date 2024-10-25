@@ -176,7 +176,7 @@ def handler(connection, client_addr, client_id):
                 LOGGER.warning("client requested unrecognised method '%s'",
                                method)
                 # error 400 bad request
-        
+
         # client.update
 
     except Exception as error:

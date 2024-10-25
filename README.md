@@ -1,10 +1,10 @@
 # py-http-server-test
 
-crappy HTTP server written in python
+Crappy HTTP server written in python, designed to serve files
 
-run from within the server directory
+## configuration & use
 
-## configuration
+run from within the `server` directory
 
 configuration is in `server/config.toml`
 
@@ -24,6 +24,7 @@ configuration is in `server/config.toml`
   - [ ] TRACE
 - [ ] multipart ranges
 - [x] compression
+- [ ] cookies support
 - [ ] https
 - [ ] simple caching
 - [ ] filesystem and table routing
@@ -79,4 +80,3 @@ graph TD;
 ```
 
 internally, configuration is done by `server.py` setting the `CONFIG` global variable in each module to an object that contains all the loaded settings
-
