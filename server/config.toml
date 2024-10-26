@@ -2,6 +2,8 @@
 port = 8000
 ip = "0.0.0.0"
 log_dir = "./logs"
+# interval in seconds
+config_refresh_interval = 5
 
 [http]
 max_http_header_size = 8192
@@ -22,6 +24,8 @@ acl_table = []
 acl_type = "allow"
 # cache for requested resources
 reponse_cache_enabled = true
+# interval in seconds
+cache_refresh_interval = 300
 # table routing is priotitised over filesystem routing
 fs_routing = true
 table_routing = false

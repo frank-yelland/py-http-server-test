@@ -10,10 +10,12 @@ configuration is in `server/config.toml`
 
 < documentation goes here >
 
+---
+
 ## goals
 
 - [x] settings hotloading
-- [ ] all http methods bar connect
+- [ ] all http methods bar CONNECT and TRACE
   - [ ] DELETE
   - [ ] GET
   - [ ] HEAD
@@ -21,7 +23,6 @@ configuration is in `server/config.toml`
   - [ ] PATCH
   - [ ] POST
   - [ ] PUT
-  - [ ] TRACE
 - [ ] multipart ranges
 - [x] compression
 - [ ] cookies support
@@ -29,54 +30,64 @@ configuration is in `server/config.toml`
 - [ ] simple caching
 - [ ] filesystem and table routing
 
-## theory of operation?
+---
 
-awful block of mermaid below
+## theory of operation
 
 ```mermaid
-graph TD;
+%%{init: {"flowchart": {"curve": "stepAfter", "defaultRenderer": "elk"}}}%% 
+flowchart TD;
+    init(["initialise server"])
     listener("check socket")
     handler("spawn handler")
-    type("type")
+    receive[/"read socket"/]
+    type{{"fetch type"}}
     hash("get md5 hash of request")
-    process_request_headers("process request headers")
-    process_response_headers("process response headers")
+    process_request_headers{{"process request headers"}}
+    process_response_headers(["gather and process response headers"])
     fetch("fetch body")
     fetch_partial("fetch partial body")
     fetch_partial_multi("fetch multipart body")
     fetch_meta("fetch metadata")
+    idempotent{{"md5 in list of PUT requests?"}}
     compress("compress body")
-    handler_send("send response & terminate connection")
-    idempotent("hash in list of GET/POST requests?")
-    acl("check for access")
-    acl_opt("check for access")
-    cache("write to cache and/or modify resources")
+    handler_send[/"send response"/]
+    handler_end(["terminate connection"])
+    acl{{"check for access"}}
+    cache(["write to cache and/or modify resources"])
+    unsupported("501 not implemented or 403 forbidden")
+    denied("403 forbidden")
+    init --> listener
     listener --> handler
     handler --> listener
-    handler --> hash
+    handler --> receive
+    receive --> hash
     hash --> process_request_headers
-    process_request_headers -->|HEAD| fetch_meta
-    process_request_headers -->|TRACE| fetch_meta
-    process_request_headers -->|GET| type
-    process_request_headers -->|PUT| idempotent
-    process_request_headers -->|POST| acl
-    process_request_headers -->|DELETE| acl
-    process_request_headers -->|PATCH| acl
-    process_request_headers -->|OPTIONS| acl_opt
-    type --> fetch
+    process_request_headers -->|HEAD, GET, or OPTIONS| type
+    process_request_headers -->|PUT, POST, DELETE, or PATCH| acl
+    process_request_headers -->|CONNECT, TRACE, or mangled| unsupported
+    type -->|full| fetch
     type -->|partial| fetch_partial
     type -->|multipart| fetch_partial_multi
-    fetch --> compress
-    fetch_meta --> process_response_headers
-    fetch_partial --> compress
-    fetch_partial_multi --> compress
-    compress --> process_response_headers
-    process_response_headers --> handler_send
-    acl --> cache
-    acl_opt --> process_response_headers
-    cache --> process_response_headers
-    idempotent -->|no| process_response_headers
-    idempotent -->|yes| acl
+    type -->|"metadata (HEAD or OPTIONS)"| fetch_meta
+    acl -->|access| cache
+    acl -->|access & PUT request|idempotent
+    acl -->|no access|denied
+    %% the arrowheads are a bug as of october 2024
+    fetch --- process_response_headers
+    fetch_meta --- process_response_headers
+    fetch_partial --- process_response_headers
+    fetch_partial_multi --- process_response_headers
+    cache --- process_response_headers
+    denied --- process_response_headers
+    unsupported --- process_response_headers
+    idempotent -->|yes| cache
+    idempotent ---|no| process_response_headers
+    process_response_headers --> compress
+    compress --> handler_send
+    handler_send --> handler_end
+
+    classDef join height:0
 ```
 
 internally, configuration is done by `server.py` setting the `CONFIG` global variable in each module to an object that contains all the loaded settings

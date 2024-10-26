@@ -26,6 +26,7 @@ import threading
 import pprint
 import os
 import sys
+import time
 from hashlib import md5
 
 import settings
@@ -165,13 +166,14 @@ def handler(connection, client_addr, client_id):
                 LOGGER.info("client requested DELETE on %s", resource)
             case "OPTIONS":
                 LOGGER.info("client requested OPTIONS on %s", resource)
-            case "TRACE":
-                LOGGER.info("client requested TRACE on %s", resource)
             case "PATCH":
                 LOGGER.info("client requested PATCH on %s", resource)
+            case "TRACE":
+                LOGGER.warning("client requested TRACE")
+                # error 403 forbidden
             case "CONNECT":
                 LOGGER.warning("client requested CONNECT")
-                # error 501 not implemented
+                # error 403 forbidden
             case _:
                 LOGGER.warning("client requested unrecognised method '%s'",
                                method)
@@ -200,12 +202,45 @@ def handler(connection, client_addr, client_id):
     LOGGER.info("connection closed")
 
 
+def config_refresh(last_config_update):
+    """reloads config
+    Arguments:
+        last_config_update: int: time.time() of last config update
+    Returns:
+        last_config_update: int: time.time() of last config update"""
+    if last_config_update >= CONFIG.cache_refresh_interval:
+        last_config_update = time.time()
+        reloaded, errors = CONFIG.reload()
+        if reloaded:
+            LOGGER.info("reloaded settings (%s)", reloaded)
+        if errors:
+            LOGGER.warning("errors hotloading settings")
+            for error in errors:
+                LOGGER.warning(error)
+    return last_config_update
+
+
+def cache_refresh(last_cache_update):
+    """refreshes the cache
+    Arguments:
+        last_cache_update: int: time.time() of last cache update
+    Returns:
+        last_cache_update: int: time.time() of last cache update"""
+    if last_cache_update >= CONFIG.cache_refresh_interval:
+        last_cache_update = time.time()
+        LOGGER.info("refreshing cache...")
+        # TODO write cache
+        LOGGER.info("cache refreshed")
+    return last_cache_update
+
+
 def listener():
     """creates a new handler for each connection"""
     # id for each connection to distinguish them when multiple connections
     # are open
     connection_id = 1
-    ticker = 0
+    last_cache_refresh = time.time()
+    last_config_refresh = time.time()
     with socket.socket() as listening_socket:
         try:
             listening_socket.bind((CONFIG.ip, CONFIG.port))
@@ -216,36 +251,34 @@ def listener():
             LOGGER.info("socket closed")
             LOGGER.info("server closed")
             sys.exit(3)
+
+        # timeout to prevent the main thread locking on socket.accept()
+        # meaning the process won't read stdin and won't exit on ctrl+c
+        listening_socket.settimeout(1)
         listening_socket.listen()
-        # log_info(f"started listening on ip '{IP}' and port {PORT}")
         LOGGER.info("started listening on ip '%s' and port %d...",
                     CONFIG.ip,
                     CONFIG.port)
         try:
             while True:
-                # opening a new thread for each connection
+                # config & cache refreshes
+                last_config_refresh = config_refresh(time.time() -
+                                                     last_config_refresh)
+                if CONFIG.response_cache_enabled:
+                    last_cache_refresh = cache_refresh(time.time() -
+                                                       last_cache_refresh)
+
                 try:
-                    # % prevents weirdness
-                    ticker = (ticker + 1) % 1000000
-                    # attepting to reload config
-                    if ticker % 5 == 0:
-                        reloaded, errors = CONFIG.reload()
-                        if reloaded:
-                            LOGGER.info("reloaded settings (%s)", reloaded)
-                        if errors:
-                            LOGGER.warning("errors hotloading settings")
-                            for error in errors:
-                                LOGGER.warning(error)
-                    # timeout to prevent the main thread locking permanently
-                    # meaning ctrl+c doesn't work
-                    listening_socket.settimeout(1)
                     new_connection = listening_socket.accept()
-                    threading.Thread(target=handler,
-                                     args=(*new_connection, connection_id),
-                                     daemon=True).start()
-                    connection_id += 1
+                # retry accepting a connection if the socket times out
+                # the reason the timeout is set is mentioned above
                 except TimeoutError:
-                    pass
+                    continue
+                # opening a new thread for each connection
+                threading.Thread(target=handler,
+                                 args=(*new_connection, connection_id),
+                                 daemon=True).start()
+                connection_id += 1
         except KeyboardInterrupt:
             LOGGER.warning("ctrl+c pressed")
             # spinning to make sure socket is closed

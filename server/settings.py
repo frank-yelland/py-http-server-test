@@ -18,6 +18,7 @@ class Settings:
         self.config_path = None
         self.port = 8000
         self.ip = "0.0.0.0"
+        self.config_refresh_interval = 5
         self.log_dir = "./logs/"
         self.max_http_header_size = 8192
         self.server_name = "frank's web server {system}/{release})"
@@ -27,7 +28,8 @@ class Settings:
         self.acl_file = []
         self.acl_table = []
         self.acl_type = "allow"
-        self.response_cache_enabled = False
+        self.response_cache_enabled = True
+        self.cache_refresh_interval = 300
         self.fs_routing = True
         self.table_routing = False
         self.route_table = [{}]

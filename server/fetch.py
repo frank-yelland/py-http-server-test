@@ -4,17 +4,28 @@ resource fetching, caching and storing PUT/POST requests
 constants:
     CONFIG
     LOGGER
+    RESPONSE_CACHE
+    REQUEST_CACHE
 functions:
-    fetch
-    fetch_meta
-    fetch_partial
-    fetch_partial_multi
+    get_resource
+    get_file
+    get_meta
+    get_partial
+    get_partial_multi
     compress
 objects:
-    cache
+    ResponseCache
+        add
+        get
+        purge
         purge_all
         purge_last
         refresh
+    RequestCache
+        add
+        get
+        purge
+        purge_all
 """
 
 import zlib
@@ -32,6 +43,25 @@ except ImportError:
 
 CONFIG = None
 LOGGER = None
+RESPONSE_CACHE = None
+REQUEST_CACHE = None
+
+
+class ResponseCache:
+    """cache for http responses, ie files"""
+    def __init__(self):
+        self.responses = []
+
+
+class RequestCache:
+    """cache for http requests"""
+    def __init__(self):
+        # {
+        #     "resource_name": {
+        #         "permissions"
+        #
+        # }
+        self.resources = {}
 
 
 def compress(string: bytes, method: str) -> bytes:
@@ -77,3 +107,7 @@ module")
         case _:
             LOGGER.warning(f"invalid compression method '{method}'")
             return (string, "identity")
+
+
+def fetch(client: dict, resource_type=None):
+    """get content"""
