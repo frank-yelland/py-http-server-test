@@ -208,7 +208,7 @@ def config_refresh(last_config_update):
         last_config_update: int: time.time() of last config update
     Returns:
         last_config_update: int: time.time() of last config update"""
-    if last_config_update >= CONFIG.cache_refresh_interval:
+    if time.time() - last_config_update >= CONFIG.cache_refresh_interval:
         last_config_update = time.time()
         reloaded, errors = CONFIG.reload()
         if reloaded:
@@ -226,7 +226,7 @@ def cache_refresh(last_cache_update):
         last_cache_update: int: time.time() of last cache update
     Returns:
         last_cache_update: int: time.time() of last cache update"""
-    if last_cache_update >= CONFIG.cache_refresh_interval:
+    if time.time() - last_cache_update >= CONFIG.cache_refresh_interval:
         last_cache_update = time.time()
         LOGGER.info("refreshing cache...")
         # TODO write cache
@@ -262,11 +262,9 @@ def listener():
         try:
             while True:
                 # config & cache refreshes
-                last_config_refresh = config_refresh(time.time() -
-                                                     last_config_refresh)
+                last_config_refresh = config_refresh(last_config_refresh)
                 if CONFIG.response_cache_enabled:
-                    last_cache_refresh = cache_refresh(time.time() -
-                                                       last_cache_refresh)
+                    last_cache_refresh = cache_refresh(last_cache_refresh)
 
                 try:
                     new_connection = listening_socket.accept()
